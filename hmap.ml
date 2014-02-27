@@ -116,3 +116,11 @@ let rec fold f s accu = match s with
   | Leaf (k,x) -> f k x accu
   | Branch (_,_,t0,t1) -> fold f t0 (fold f t1 accu)
 
+
+let rec for_all2 p s1 s2 = 
+  match s1, s2 with
+    Empty, Empty -> true
+  | Leaf (_, x1), Leaf (_, x2) -> p x1 x2
+  | Branch (_,_,t00,t01), Branch (_,_,t10,t11) -> 
+    for_all2 p t00 t10 && for_all2 p t01 t11
+  | _, _ -> false

@@ -37,3 +37,5 @@ val map : ('b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
 val mapi : ('a key -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
 
 val fold : ('a key -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
+
+val for_all2: ('b -> 'd -> bool) -> ('a, 'b) t -> ('c, 'd) t -> bool
