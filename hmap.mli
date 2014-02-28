@@ -24,13 +24,20 @@ val empty : ('a, 'b) t
 
 val add : 'a key -> 'b -> ('a, 'b) t -> ('a, 'b) t
 
+val replace : 'a key -> 'b -> ('a, 'b) t -> ('a, 'b) t
+
+(** may raise Not_found if the key is not in the map *)
+val update : 'a key -> ('b -> 'b) -> ('a, 'b) t -> ('a, 'b) t
+
 val find : 'a key -> ('a, 'b) t -> 'b
 
 val remove : 'a key -> ('a, 'b) t -> ('a, 'b) t
 
 val mem :  'a key -> ('a, 'b) t -> bool
 
-val iter : ('a key -> 'b -> unit) -> ('a, 'b) t -> unit
+val iter : ('b -> unit) -> ('a, 'b) t -> unit
+
+val iteri : ('a key -> 'b -> unit) -> ('a, 'b) t -> unit
 
 val map : ('b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
 
@@ -38,7 +45,14 @@ val mapi : ('a key -> 'b -> 'c) -> ('a, 'b) t -> ('a, 'c) t
 
 val fold : ('a key -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c
 
-val for_all: ('b -> bool) -> ('a, 'b) t -> bool
+val exists : ('b -> bool) -> ('a, 'b) t -> bool
 
-val for_all2: ('b -> 'd -> bool) -> ('a, 'b) t -> ('c, 'd) t -> bool
+val for_all : ('b -> bool) -> ('a, 'b) t -> bool
 
+val for_all2 : ('b -> 'c -> bool) -> ('a, 'b) t -> ('a, 'c) t -> bool
+
+val map2 : ('b -> 'c -> 'd) -> ('a, 'b) t -> ('a, 'c) t -> ('a, 'd) t
+
+val mapi2 : ('a key -> 'b -> 'c -> 'd) -> ('a, 'b) t -> ('a, 'c) t -> ('a, 'd) t
+
+val iter2 : ('b -> 'c -> unit) -> ('a, 'b) t -> ('a, 'c) t -> unit

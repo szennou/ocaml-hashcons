@@ -37,6 +37,8 @@ let rec mem k = function
   | Leaf (j,_) -> k.tag == j.tag
   | Branch (_, m, l, r) -> mem k (if zero_bit k.tag m then l else r)
 
+
+
 let rec find k = function
   | Empty -> raise Not_found
   | Leaf (j,x) -> if k.tag == j.tag then x else raise Not_found
@@ -76,6 +78,46 @@ let add k x t =
   in
   ins t
 
+let rec replace k x t =
+  let rec ins t = 
+    match t with
+	Empty -> Leaf (k,x)
+      | Leaf(j, y) as t ->
+	if j.tag == k.tag then
+	  Leaf (k, y)
+	else
+	  join (k.tag, Leaf (k, x), j.tag, t)
+      | Branch(p,m,t0,t1) as t ->
+	  if match_prefix k.tag p m then
+	    if zero_bit k.tag m then
+	      Branch (p, m, ins t0, t1)
+	    else
+	      Branch (p, m, t0, ins t1)
+	  else
+	    join (k.tag, Leaf (k,x), p, t)
+  in
+  ins t
+
+let rec update k f t =
+  let rec ins t = 
+    match t with
+	Empty -> raise Not_found
+      | Leaf(j, x) ->
+	if j.tag == k.tag then
+	  Leaf (k, f x)
+	else
+	  raise Not_found
+      | Branch(p,m,t0,t1) ->
+	  if match_prefix k.tag p m then
+	    if zero_bit k.tag m then
+	      Branch (p, m, ins t0, t1)
+	    else
+	      Branch (p, m, t0, ins t1)
+	  else
+	    raise Not_found
+  in
+  ins t
+
 let branch = function
   | (_,_,Empty,t) -> t
   | (_,_,t,Empty) -> t
@@ -98,8 +140,13 @@ let remove k t =
 
 let rec iter f = function
   | Empty -> ()
-  | Leaf (k,x) -> f k x
+  | Leaf (_,x) -> f x
   | Branch (_,_,t0,t1) -> iter f t0; iter f t1
+
+let rec iteri f = function
+  | Empty -> ()
+  | Leaf (k,x) -> f k x
+  | Branch (_,_,t0,t1) -> iteri f t0; iteri f t1
 
 let rec map f = function
   | Empty -> Empty
@@ -116,7 +163,12 @@ let rec fold f s accu = match s with
   | Leaf (k,x) -> f k x accu
   | Branch (_,_,t0,t1) -> fold f t0 (fold f t1 accu)
 
-
+let rec exists p s =
+  match s with
+      Empty -> false
+    | Leaf (_, x) -> p x
+    | Branch (_,_,t0,t1) -> exists p t0 || exists p t1
+    
 let rec for_all p s =
     match s with
       Empty -> true
@@ -126,7 +178,47 @@ let rec for_all p s =
 let rec for_all2 p s1 s2 = 
   match s1, s2 with
     Empty, Empty -> true
-  | Leaf (_, x1), Leaf (_, x2) -> p x1 x2
-  | Branch (_,_,t00,t01), Branch (_,_,t10,t11) -> 
-    for_all2 p t00 t10 && for_all2 p t01 t11
-  | _, _ -> false
+  | Leaf (k1, x1), Leaf (k2, x2) -> 
+    if k1.tag == k2.tag then p x1 x2
+    else raise (Failure "Hmap.for_all2")
+  | Branch (p0,m0,t00,t01), Branch (p1,m1,t10,t11) -> 
+    if p0 = p1 && m0 = m1 then 
+      for_all2 p t00 t10 && for_all2 p t01 t11
+    else raise (Failure "Hmap.for_all2")
+  | _, _ -> raise (Failure "Hmap.for_all2")
+
+let rec map2 f s1 s2 =
+  match s1, s2 with
+    Empty, Empty -> Empty
+  | Leaf (k1, x1), Leaf (k2, x2) -> 
+    if k1.tag == k2.tag then Leaf(k1, f x1 x2)
+    else raise (Failure "Hmap.map2")
+  | Branch (p0,m0,t00,t01), Branch (p1,m1,t10,t11) -> 
+    if p0 = p1 && m0 = m1 then
+      Branch(p0, m0, map2 f t00 t10, map2 f t01 t11)
+    else raise (Failure "Hmap.map2")
+  | _, _ -> raise (Failure "Hmap.map2")
+
+let rec mapi2 f s1 s2 =
+  match s1, s2 with
+    Empty, Empty -> Empty
+  | Leaf (k1, x1), Leaf (k2, x2) -> 
+    if k1.tag == k2.tag then Leaf(k1, f k1 x1 x2)
+    else raise (Failure "Hmap.mapi2")
+  | Branch (p0,m0,t00,t01), Branch (p1,m1,t10,t11) -> 
+    if p0 = p1 && m0 = m1 then
+      Branch(p0, m0, mapi2 f t00 t10, mapi2 f t01 t11)
+    else raise (Failure "Hmap.mapi2")
+  | _, _ -> raise (Failure "Hmap.mapi2")
+
+let rec iter2 f s1 s2 =
+  match s1, s2 with
+      Empty, Empty -> ()
+    | Leaf (k1, x1), Leaf (k2, x2) -> 
+    if k1.tag == k2.tag then f x1 x2
+    else raise (Failure "Hmap.iter2")
+  | Branch (p0,m0,t00,t01), Branch (p1,m1,t10,t11) -> 
+    if p0 = p1 && m0 = m1 then
+      begin iter2 f t00 t10; iter2 f t01 t11 end
+    else raise (Failure "Hmap.iter2")
+  | _, _ -> raise (Failure "Hmap.iter2")
