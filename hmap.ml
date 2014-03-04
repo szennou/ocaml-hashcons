@@ -252,3 +252,8 @@ let rec merge f s1 s2 =
 
 
    | Leaf (k, x), t | t, Leaf (k, x) -> insert f k x t
+
+let is_singleton s =
+  match s with
+    Leaf _ -> true
+  | _ -> false
