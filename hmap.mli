@@ -56,3 +56,5 @@ val map2 : ('b -> 'c -> 'd) -> ('a, 'b) t -> ('a, 'c) t -> ('a, 'd) t
 val mapi2 : ('a key -> 'b -> 'c -> 'd) -> ('a, 'b) t -> ('a, 'c) t -> ('a, 'd) t
 
 val iter2 : ('b -> 'c -> unit) -> ('a, 'b) t -> ('a, 'c) t -> unit
+
+val merge: ('b -> 'b -> 'b) -> ('a, 'b) t -> ('a, 'b) t -> ('a, 'b) t

@@ -4,8 +4,7 @@
 (*                                                                        *)
 (*  This software is free software; you can redistribute it and/or        *)
 (*  modify it under the terms of the GNU Library General Public           *)
-(*  License version 2.1, with the special exception on linking            *)
-(*  described in file LICENSE.                                            *)
+(*  License version 2.1, with the special exception on linking            *)(*  described in file LICENSE.                                            *)
 (*                                                                        *)
 (*  This software is distributed in the hope that it will be useful,      *)
 (*  but WITHOUT ANY WARRANTY; without even the implied warranty of        *)
@@ -59,12 +58,12 @@ let join (p0,t0,p1,t1) =
 
 let match_prefix k p m = (mask k m) == p
 
-let add k x t =
+let insert f k x t =
   let rec ins = function
     | Empty -> Leaf (k,x)
-    | Leaf (j,_) as t ->
+    | Leaf (j, x') as t ->
 	if j.tag == k.tag then
-	  Leaf (k,x)
+	  Leaf (k, f x x')
 	else
 	  join (k.tag, Leaf (k,x), j.tag, t)
     | Branch (p,m,t0,t1) as t ->
@@ -78,6 +77,7 @@ let add k x t =
   in
   ins t
 
+let add k x t = insert (fun y _ -> y) k x t 
 let rec replace k x t =
   let rec ins t = 
     match t with
@@ -222,3 +222,33 @@ let rec iter2 f s1 s2 =
       begin iter2 f t00 t10; iter2 f t01 t11 end
     else raise (Failure "Hmap.iter2")
   | _, _ -> raise (Failure "Hmap.iter2")
+
+
+let rec merge f s1 s2 =
+   match s1, s2 with
+     Empty, s | s, Empty -> s
+   | Branch (p1, m1, l1, r1), Branch(p2, m2, l2, r2) 
+     when m1 = m2 && p1 = p2 ->
+       let l = merge f l1 l2 in
+       let r = merge f r1 r2 in
+       Branch(p1, m1, l, r)
+   
+   | Branch (p1, m1, _, _), Branch(p2, m2, l2, r2) 
+     when m1 < m2 && match_prefix p1 p2 m2 ->
+	 if (zero_bit p1 m2) then
+	   Branch(p2, m2, merge f s1 l2, r2)
+	 else Branch(p2, m2, l2, merge f s1 r2)
+
+
+   | Branch (p1, m1, l1, r1), Branch(p2, m2, _, _) 
+     when m1 > m2 && match_prefix p2 p1 m1 ->
+	 if (zero_bit p2 m1) then
+	   Branch (p1, m1, merge f l1 s2, r1)
+	 else Branch(p1, m1, l1, merge f r1 s2)
+
+
+   | Branch (p1, _, _, _), Branch (p2, _, _, _) ->
+     join (p1, s1, p2, s2) 
+
+
+   | Leaf (k, x), t | t, Leaf (k, x) -> insert f k x t
