@@ -4,7 +4,8 @@
 (*                                                                        *)
 (*  This software is free software; you can redistribute it and/or        *)
 (*  modify it under the terms of the GNU Library General Public           *)
-(*  License version 2.1, with the special exception on linking            *)(*  described in file LICENSE.                                            *)
+(*  License version 2.1, with the special exception on linking            *)
+(*  described in file LICENSE.                                            *)
 (*                                                                        *)
 (*  This software is distributed in the hope that it will be useful,      *)
 (*  but WITHOUT ANY WARRANTY; without even the implied warranty of        *)
@@ -257,3 +258,35 @@ let is_singleton s =
   match s with
     Leaf _ -> true
   | _ -> false
+
+let meet f s1 s2 =
+  let rec meet s1 s2 =
+    match s1, s2 with
+      | Branch (p1, m1, l1, r1), Branch (p2, m2, l2, r2) 
+	  when p1 = p2 && m1 = m2 -> 
+	  let l = meet l1 l2 in
+	  let r = meet r1 r2 in
+	    Branch (p1, m1, l, r)
+
+      | Branch (p1, m1, _, _), Branch (p2, m2, l2, r2)
+	  when m1 < m2 && (match_prefix p1 p2 m2) ->
+	  if (zero_bit p1 m2) then meet s1 l2 else meet s1 r2
+
+      | Branch (p1, m1, l1, r1), Branch (p2, m2, _, _) 
+	  when m1 > m2 && (match_prefix p2 p1 m1) ->
+	  if (zero_bit p2 m1) then meet l1 s2 else meet r1 s2
+
+      | Branch _, Branch _ -> Empty
+
+      | Leaf (k1, x1), Leaf (k2, x2) when k1.tag == k2.tag -> Leaf (k1, f x1 x2)
+
+      | Leaf (k, x), t | t, Leaf (k, x) -> begin
+	  try
+	    let y = find k t in
+	    let x = f x y in
+	      Leaf (k, x)
+	  with Not_found | Exit -> Empty
+	end
+      | Empty, _ | _, Empty -> Empty
+  in
+    meet s1 s2

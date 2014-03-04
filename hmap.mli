@@ -59,4 +59,6 @@ val iter2 : ('b -> 'c -> unit) -> ('a, 'b) t -> ('a, 'c) t -> unit
 
 val merge: ('b -> 'b -> 'b) -> ('a, 'b) t -> ('a, 'b) t -> ('a, 'b) t
 
+val meet: ('b -> 'b -> 'b) -> ('a, 'b) t -> ('a, 'b) t -> ('a, 'b) t
+
 val is_singleton: ('a, 'b) t -> bool
