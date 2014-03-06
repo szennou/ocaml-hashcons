@@ -76,3 +76,4 @@ val max_elt : 'a t -> 'a elt
    intersection. *)
 
 val intersect : 'a t -> 'a t -> bool
+
