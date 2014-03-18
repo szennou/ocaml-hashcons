@@ -79,25 +79,8 @@ let insert f k x t =
   ins t
 
 let add k x t = insert (fun y _ -> y) k x t 
-let rec replace k x t =
-  let rec ins t = 
-    match t with
-	Empty -> Leaf (k,x)
-      | Leaf(j, y) as t ->
-	if j.tag == k.tag then
-	  Leaf (k, y)
-	else
-	  join (k.tag, Leaf (k, x), j.tag, t)
-      | Branch(p,m,t0,t1) as t ->
-	  if match_prefix k.tag p m then
-	    if zero_bit k.tag m then
-	      Branch (p, m, ins t0, t1)
-	    else
-	      Branch (p, m, t0, ins t1)
-	  else
-	    join (k.tag, Leaf (k,x), p, t)
-  in
-  ins t
+
+let replace k x t = insert (fun _ _ -> x) k x t
 
 let rec update k f t =
   let rec ins t = 
